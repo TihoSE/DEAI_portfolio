@@ -1,0 +1,40 @@
+from abc import ABC, abstractmethod
+
+class LinkedList(ABC):
+    @abstractmethod
+    def toString(self):
+        pass
+   
+    def addFirst(self, value):
+
+        return Populated(value, self)
+
+class Empty(LinkedList):
+    def toString(self):
+        return ""
+    
+        
+        
+
+class Populated(LinkedList):
+    def __init__(self, value, tail):
+        self.value = value  
+        self.tail = tail   
+
+    def toString(self):
+        return f"{self.value} {self.tail.toString()}"
+        
+
+lijst_0 = Empty()
+print(f"Lege lijst: '{lijst_0.toString()}'")
+
+lijst_1 = lijst_0.addFirst(7)
+print(f"Na addFirst(7): '{lijst_1.toString()}'")
+
+lijst_2 = lijst_1.addFirst(4)
+print(f"Na addFirst(4): '{lijst_2.toString()}'")
+
+lijst_3 = lijst_2.addFirst(5)
+print(f"Na addFirst(5): '{lijst_3.toString()}'")
+
+print(f"Check original: '{lijst_2.toString()}'")
