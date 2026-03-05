@@ -1,0 +1,200 @@
+-- ==========================================
+-- TOTAAL SCRIPT SOURCE DATA MODEL (SDM)
+-- ==========================================
+
+-- BRON 1: ACCESSOIREVERKOOP
+CREATE TABLE Accessoire_Verkoop_Leverancier (
+    leveranciernr INTEGER PRIMARY KEY,
+    naam TEXT,
+    adres TEXT,
+    woonplaats TEXT
+);
+
+CREATE TABLE Accessoire_Verkoop_Filiaal (
+    filiaalnr INTEGER PRIMARY KEY,
+    naam TEXT,
+    adres TEXT,
+    provincie TEXT
+);
+
+CREATE TABLE Accessoire_Verkoop_Klant (
+    klantnr INTEGER PRIMARY KEY,
+    naam TEXT,
+    adres TEXT,
+    woonplaats TEXT,
+    geslacht CHAR(1),
+    geboortedatum DATE
+);
+
+CREATE TABLE Accessoire_Verkoop_Accessoire (
+    accessoirenr INTEGER PRIMARY KEY,
+    naam TEXT,
+    standaardprijs REAL,
+    inkoopprijs REAL,
+    soort TEXT,
+    leverancier INTEGER,
+    FOREIGN KEY(leverancier) REFERENCES Accessoire_Verkoop_Leverancier(leveranciernr)
+);
+
+CREATE TABLE Accessoire_Verkoop_Monteur (
+    monteurnr INTEGER PRIMARY KEY,
+    naam TEXT,
+    woonplaats TEXT,
+    uurloon REAL,
+    filiaal INTEGER,
+    FOREIGN KEY(filiaal) REFERENCES Accessoire_Verkoop_Filiaal(filiaalnr)
+);
+
+CREATE TABLE Accessoire_Verkoop (
+    accessoire_verkoopnr INTEGER PRIMARY KEY,
+    datum DATE,
+    aantal INTEGER,
+    verkoopprijs REAL,
+    klant INTEGER,
+    accessoire INTEGER,
+    monteur INTEGER,
+    FOREIGN KEY (klant) REFERENCES Accessoire_Verkoop_Klant(klantnr),
+    FOREIGN KEY (accessoire) REFERENCES Accessoire_Verkoop_Accessoire(accessoirenr),        
+    FOREIGN KEY (monteur) REFERENCES Accessoire_Verkoop_Monteur(monteurnr)
+);
+
+-- BRON 2: FIETSVERKOOP
+CREATE TABLE Fietsverkoop_Klant (
+    klantnr INTEGER PRIMARY KEY,
+    naam TEXT,
+    adres TEXT,
+    woonplaats TEXT,
+    geslacht TEXT,
+    geboortedatum DATE
+);
+
+CREATE TABLE Fietsverkoop_Filiaal (
+    filiaalnr INTEGER PRIMARY KEY,
+    naam TEXT,
+    adres TEXT,
+    provincie TEXT
+);
+
+CREATE TABLE Fietsverkoop_Fiets (
+    fietsnr INTEGER PRIMARY KEY,
+    soort TEXT,
+    merk TEXT,
+    type TEXT,
+    kleur TEXT,
+    standaardprijs REAL
+);
+
+CREATE TABLE Fiets_Verkoop (
+    verkoopnr INTEGER PRIMARY KEY,
+    datum DATE,
+    verkoopprijs REAL,
+    klantnr INTEGER,
+    fietsnr INTEGER,
+    filiaalnr INTEGER,
+    FOREIGN KEY (klantnr) REFERENCES Fietsverkoop_Klant(klantnr),
+    FOREIGN KEY (fietsnr) REFERENCES Fietsverkoop_Fiets(fietsnr),
+    FOREIGN KEY (filiaalnr) REFERENCES Fietsverkoop_Filiaal(filiaalnr)
+);
+
+-- BRON 3: ONDERHOUD
+CREATE TABLE Onderhoud_Fabrikant (
+    fabrikantnr INT PRIMARY KEY,
+    naam VARCHAR(45),
+    adres VARCHAR(100),
+    plaats VARCHAR(45)
+);
+
+CREATE TABLE Onderhoud_Fiets (
+    fietsnr INT PRIMARY KEY,
+    soort VARCHAR(45),
+    merk VARCHAR(45),
+    type VARCHAR(45),
+    standaardprijs FLOAT,
+    inkoopprijs FLOAT,
+    kleur VARCHAR(20),
+    fabrikant INT NOT NULL,
+    FOREIGN KEY(fabrikant) REFERENCES Onderhoud_Fabrikant(fabrikantnr)
+);
+
+CREATE TABLE Onderhoud_Filiaal (
+    filiaalnr INT PRIMARY KEY,
+    naam VARCHAR(45),
+    adres VARCHAR(100),
+    provincie VARCHAR(20)
+);
+
+CREATE TABLE Onderhoud_Monteur (
+    monteurnr INT PRIMARY KEY,
+    naam VARCHAR(45),
+    woonplaats VARCHAR(45),
+    uurloon FLOAT,
+    filiaal INT NOT NULL,
+    FOREIGN KEY(filiaal) REFERENCES Onderhoud_Filiaal(filiaalnr)
+);
+
+CREATE TABLE Onderhoud (
+    onderhoudnr INT PRIMARY KEY,
+    datum DATE,
+    starttijd TIME,
+    eindtijd TIME,
+    fiets INT NOT NULL,
+    monteur INT NOT NULL,
+    FOREIGN KEY(fiets) REFERENCES Onderhoud_Fiets(fietsnr),
+    FOREIGN KEY(monteur) REFERENCES Onderhoud_Monteur(monteurnr)
+);
+
+-- BRON 4: ACCESSOIRE-INKOOP
+CREATE TABLE Accessoire_Inkoop_Leverancier (
+    leveranciernr INT PRIMARY KEY,
+    naam VARCHAR(45),
+    adres VARCHAR(100),
+    woonplaats VARCHAR(45)
+);
+
+CREATE TABLE Accessoire_Inkoop_Accessoire (
+    accessoirenr INT PRIMARY KEY,
+    naam VARCHAR(45),
+    standaardprijs FLOAT,
+    inkoopprijs FLOAT,
+    soort VARCHAR(45),
+    leverancier INT NOT NULL,
+    FOREIGN KEY(leverancier) REFERENCES Accessoire_Inkoop_Leverancier(leveranciernr)
+);
+
+CREATE TABLE Accessoire_Inkoop (
+    inkoopnr INT PRIMARY KEY,
+    inkoopmaand INT,
+    inkoopjaar INT,
+    aantal INT,
+    accessoire INT NOT NULL,
+    FOREIGN KEY(accessoire) REFERENCES Accessoire_Inkoop_Accessoire(accessoirenr)
+);
+
+-- BRON 5: FIETSINKOOP
+CREATE TABLE Fiets_Inkoop_Fabrikant (
+    fabrikantnr INT PRIMARY KEY,
+    naam VARCHAR(45),
+    adres VARCHAR(100),
+    plaats VARCHAR(45)
+);
+
+CREATE TABLE Fiets_Inkoop_Fiets (
+    fietsnr INT PRIMARY KEY,
+    soort VARCHAR(45),
+    merk VARCHAR(45),
+    type VARCHAR(45),
+    standaardprijs FLOAT,
+    inkoopprijs FLOAT,
+    kleur VARCHAR(20),
+    fabrikant INT NOT NULL,
+    FOREIGN KEY(fabrikant) REFERENCES Fiets_Inkoop_Fabrikant(fabrikantnr)
+);
+
+CREATE TABLE Fiets_Inkoop (
+    inkoopnr INT PRIMARY KEY,
+    inkoopmaand INT,
+    inkoopjaar INT,
+    aantal INT,
+    fiets INT NOT NULL,
+    FOREIGN KEY(fiets) REFERENCES Fiets_Inkoop_Fiets(fietsnr)
+);
