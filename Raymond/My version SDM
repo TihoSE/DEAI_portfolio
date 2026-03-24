@@ -1,0 +1,95 @@
+import sqlite3
+import pandas as pd
+from loguru import logger
+import os
+
+# 1. De vaste connecties (zoals gevraagd)
+conn1 = sqlite3.connect('BikeToDrive_1_Accessoireverkoop.db')
+conn2 = sqlite3.connect('BikeToDrive_2_Fietsverkoop.db')
+conn3 = sqlite3.connect('BikeToDrive_3_Onderhoud.db')
+conn4 = sqlite3.connect('BikeToDrive_4_Accessoire_Inkoop.db')
+conn5 = sqlite3.connect('BikeToDrive_5_Fiets_Inkoop.db')
+
+# De doel-database
+conn_sdm = sqlite3.connect('SDM.db')
+
+def reset_sdm():
+    try:
+        cursor = conn_sdm.cursor()
+        # Haal alle tabellen op die niet van het systeem zelf zijn
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';")
+        tabellen = [t[0] for t in cursor.fetchall()]
+
+        for tabel in tabellen:
+            cursor.execute(f"DELETE FROM {tabel}")
+        
+        conn_sdm.commit()
+        logger.info(f"Reset geslaagd: {len(tabellen)} tabellen geleegd.")
+    except Exception as e:
+        logger.error(f"Fout bij reset: {e}")
+
+def overzetten_alle_data():
+    logger.info("Start ETL-proces met Bulk Loading...")
+
+    # Mapping van de reeds geopende connecties naar hun tabel-configuratie
+    mapping_config = [
+        (conn1, {
+            'Klant': 'Accessoire_Verkoop_Klant', 'Filiaal': 'Accessoire_Verkoop_Filiaal',
+            'Monteur': 'Accessoire_Verkoop_Monteur', 'Leverancier': 'Accessoire_Verkoop_Leverancier',
+            'Accessoire': 'Accessoire_Verkoop_Accessoire', 'Accessoire_Verkoop': 'Accessoire_Verkoop'
+        }),
+        (conn2, {
+            'Klant': 'Fietsverkoop_Klant', 'Filiaal': 'Fietsverkoop_Filiaal',
+            'Fiets': 'Fietsverkoop_Fiets', 'Fiets_Verkoop': 'Fiets_Verkoop'
+        }),
+        (conn3, {
+            'Fabrikant': 'Onderhoud_Fabrikant', 'Fiets': 'Onderhoud_Fiets',
+            'Filiaal': 'Onderhoud_Filiaal', 'Monteur': 'Onderhoud_Monteur', 'Onderhoud': 'Onderhoud'
+        }),
+        (conn4, {
+            'Leverancier': 'Accessoire_Inkoop_Leverancier', 'Accessoire': 'Accessoire_Inkoop_Accessoire',
+            'Accessoire_Inkoop': 'Accessoire_Inkoop'
+        }),
+        (conn5, {
+            'Fabrikant': 'Fiets_Inkoop_Fabrikant', 'Fiets': 'Fiets_Inkoop_Fiets',
+            'Fiets_Inkoop': 'Fiets_Inkoop'
+        })
+    ]
+
+    try:
+        for bron_conn, tabellen in mapping_config:
+            for bron_tabel, sdm_tabel in tabellen.items():
+                # Data inlezen
+                df = pd.read_sql_query(f"SELECT * FROM {bron_tabel}", bron_conn)
+                
+                if not df.empty:
+                    # BULK LOADING: 
+                    # chunksize bepaalt hoeveel rijen per keer.
+                    # method='multi' zorgt voor meerdere inserts in één query.
+                    df.to_sql(
+                        sdm_tabel, 
+                        conn_sdm, 
+                        if_exists='append', 
+                        index=False, 
+                        chunksize=1000, 
+                        method='multi'
+                    )
+                    logger.success(f"Bulk load: {len(df)} rijen naar {sdm_tabel}")
+        
+        logger.success("Alle data succesvol overgezet.")
+
+    except Exception as e:
+        logger.error(f"Fout tijdens overzetten: {e}")
+
+# Uitvoeren van de stappen
+if __name__ == "__main__":
+    reset_sdm()
+    overzetten_alle_data()
+    
+    # Netjes afsluiten aan het einde van het script
+    conn1.close()
+    conn2.close()
+    conn3.close()
+    conn4.close()
+    conn5.close()
+    conn_sdm.close()
