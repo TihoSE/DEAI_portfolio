@@ -1,0 +1,137 @@
+from abc import ABC, abstractmethod
+import sys
+
+# Verhoog de recursielimiet voor grotere lijsten (nodig voor Stap 10)
+sys.setrecursionlimit(5000)
+
+class LinkedList(ABC):
+    @abstractmethod
+    def toString(self): pass
+    @abstractmethod
+    def addFirst(self, value): pass
+    @abstractmethod
+    def remove(self, value): pass
+    @abstractmethod
+    def smallest(self): pass
+    @abstractmethod
+    def sortSimple(self): pass
+    @abstractmethod
+    def isEmpty(self): pass
+    @abstractmethod
+    def length(self): pass
+    @abstractmethod
+    def subList(self, start, end): pass
+    @abstractmethod
+    def merge(self, other): pass
+    @abstractmethod
+    def sortMerge(self): pass
+    @abstractmethod
+    def uniq(self): pass
+
+class Empty(LinkedList):
+    def toString(self): return ""
+    def addFirst(self, value): return Populated(value, self)
+    def remove(self, value): return self
+    def smallest(self): return float('inf')
+    def sortSimple(self): return self
+    def isEmpty(self): return True
+    def length(self): return 0
+    def subList(self, start, end): return self
+    def merge(self, other): return other
+    def sortMerge(self): return self
+    def uniq(self): return 0
+
+class Populated(LinkedList):
+    def __init__(self, value, tail):
+        self.value = value
+        self.tail = tail
+
+    def isEmpty(self): return False
+
+    def length(self):
+        return 1 + self.tail.length()
+
+    def toString(self):
+        return f"{self.value} {self.tail.toString()}"
+
+    def addFirst(self, value):
+        return Populated(value, self)
+
+    def remove(self, value):
+        if self.value == value:
+            return self.tail
+        return Populated(self.value, self.tail.remove(value))
+
+    def smallest(self):
+        t_small = self.tail.smallest()
+        return self.value if self.value < t_small else t_small
+
+    def sortSimple(self):
+        low = self.smallest()
+        return Populated(low, self.remove(low).sortSimple())
+
+    # --- OPDRACHT 3 METHODEN ---
+
+    def subList(self, start, end):
+        if start > 0:
+            return self.tail.subList(start - 1, end - 1)
+        if end <= 0:
+            return Empty()
+        return Populated(self.value, self.tail.subList(0, end - 1))
+
+    def merge(self, other):
+        if other.isEmpty():
+            return self
+        if self.value <= other.value:
+            return Populated(self.value, self.tail.merge(other))
+        else:
+            return Populated(other.value, self.merge(other.tail))
+
+    def sortMerge(self):
+        n = self.length()
+        if n <= 1:
+            return self
+        
+        mid = n // 2
+        left = self.subList(0, mid).sortMerge()
+        right = self.subList(mid, n).sortMerge()
+        
+        return left.merge(right)
+
+    def uniq(self):
+        if self.tail.isEmpty():
+            return 1
+        count = 0 if self.value == self.tail.value else 1
+        return count + self.tail.uniq()
+
+# --- TEST SCRIPT ---
+if __name__ == "__main__":
+    # Testen met een kleine lijst
+    print("--- Test met kleine lijst ---")
+    test_data = [4, 7, 4, 5]
+    lijst = Empty()
+    for v in test_data:
+        lijst = lijst.addFirst(v) # Resultaat: 5 4 7 4
+    
+    print(f"Origineel: {lijst.toString()}")
+    
+    gesorteerd = lijst.sortMerge()
+    print(f"MergeSorted: {gesorteerd.toString()}")
+    print(f"Unieke elementen: {gesorteerd.uniq()}")
+
+    # Stap 7/8/9: Inlezen van bestand (Pseudo-code voorbeeld)
+    # Zorg dat 'kentekens1000.txt' in dezelfde map staat.
+    """
+    print("\n--- Kentekens inlezen ---")
+    kenteken_lijst = Empty()
+    try:
+        with open('kentekens1000.txt', 'r') as f:
+            for line in f:
+                kenteken_lijst = kenteken_lijst.addFirst(line.strip())
+        
+        print("Bestand ingelezen. Sorteren...")
+        gesorteerd_k = kenteken_lijst.sortMerge()
+        print(f"Aantal unieke kentekens: {gesorteerd_k.uniq()}")
+    except FileNotFoundError:
+        print("Bestand 'kentekens1000.txt' niet gevonden.")
+    """

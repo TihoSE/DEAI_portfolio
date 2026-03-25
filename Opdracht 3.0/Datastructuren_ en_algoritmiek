@@ -2,39 +2,87 @@ from abc import ABC, abstractmethod
 
 class LinkedList(ABC):
     @abstractmethod
-    def toString(self):
-        pass
-   
-    def addFirst(self, value):
-
-        return Populated(value, self)
+    def toString(self): pass
+    @abstractmethod
+    def addFirst(self, value): pass
+    @abstractmethod
+    def remove(self, value): pass
+    @abstractmethod
+    def smallest(self): pass
+    @abstractmethod
+    def sortSimple(self): pass
+    @abstractmethod
+    def isEmpty(self): pass
 
 class Empty(LinkedList):
-    def toString(self):
-        return ""
-    
-        
-        
+    def toString(self): return ""
+    def addFirst(self, value): return Populated(value, self)
+    def remove(self, value): return self
+    def smallest(self): return float('inf') # Oneindig groot om vergelijking niet te storen
+    def sortSimple(self): return self
+    def isEmpty(self): return True
 
 class Populated(LinkedList):
     def __init__(self, value, tail):
-        self.value = value  
-        self.tail = tail   
+        self.value = value
+        self.tail = tail # Dit is weer een LinkedList (Empty of Populated)
 
+    def isEmpty(self): return False
+
+    # 2. toString
     def toString(self):
         return f"{self.value} {self.tail.toString()}"
-        
 
-lijst_0 = Empty()
-print(f"Lege lijst: '{lijst_0.toString()}'")
+    # 3. addFirst
+    def addFirst(self, value):
+        return Populated(value, self)
 
-lijst_1 = lijst_0.addFirst(7)
-print(f"Na addFirst(7): '{lijst_1.toString()}'")
+    # 4. remove (verwijdert alleen de eerste instantie)
+    def remove(self, value):
+        if self.value == value:
+            return self.tail
+        else:
+            return Populated(self.value, self.tail.remove(value))
 
-lijst_2 = lijst_1.addFirst(4)
-print(f"Na addFirst(4): '{lijst_2.toString()}'")
+    # 5. smallest
+    def smallest(self):
+        tail_smallest = self.tail.smallest()
+        return self.value if self.value < tail_smallest else tail_smallest
 
-lijst_3 = lijst_2.addFirst(5)
-print(f"Na addFirst(5): '{lijst_3.toString()}'")
+    # 6. sortSimple (Selection Sort principe)
+    def sortSimple(self):
+        low = self.smallest()
+        remaining = self.remove(low)
+        return Populated(low, remaining.sortSimple())
+    
+    # 8. uniq (telt unieke elementen in een GESORTEERDE lijst)
+    def uniq(self):
+        if self.tail.isEmpty():
+            return 1
+        # Omdat het gesorteerd is, hoeven we alleen naar de buurman te kijken
+        current_count = 0 if self.value == self.tail.value else 1
+        return current_count + self.tail.uniq()
+    
+    # --- TEST ZONE ---
+if __name__ == "__main__":
+    # Begin met een lege lijst
+    mijn_lijst = Empty()
 
-print(f"Check original: '{lijst_2.toString()}'")
+    # Voeg wat getallen toe (Stap 3: addFirst)
+    mijn_lijst = mijn_lijst.addFirst(10)
+    mijn_lijst = mijn_lijst.addFirst(5)
+    mijn_lijst = mijn_lijst.addFirst(20)
+    mijn_lijst = mijn_lijst.addFirst(5)
+
+    # Print de lijst (Stap 2: toString)
+    print("Mijn lijst:", mijn_lijst.toString())
+
+    # Zoek de kleinste (Stap 5)
+    print("Kleinste getal:", mijn_lijst.smallest())
+
+    # Sorteer de lijst (Stap 6)
+    gesorteerde_lijst = mijn_lijst.sortSimple()
+    print("Gesorteerd:", gesorteerde_lijst.toString())
+    
+    # Tel unieke kentekens (Stap 8/9)
+    print("Aantal uniek:", gesorteerde_lijst.uniq())
